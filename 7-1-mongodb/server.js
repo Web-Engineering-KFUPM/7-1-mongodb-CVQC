@@ -185,20 +185,77 @@
  */
 
 // import mongoose
+import mongoose from "mongoose";
 
 // establish connection
+const databasePassword = process.env.MONGODB_PASSWORD || "<db_password>";
+const connectionString =
+   process.env.MONGODB_URI ||
+   `mongodb+srv://FAISAL:${databasePassword}@cluster0.urrela9.mongodb.net/labDB`;
 
 
 // define schema
+const studentSchema = new mongoose.Schema({
+   name: String,
+   age: Number,
+   major: String
+});
 
+const Student = mongoose.model("Student", studentSchema);
 
 // create document
+async function createStudents() {
+   await Student.insertMany([
+      { name: "Ali", age: 21, major: "CS" },
+      { name: "Sara", age: 23, major: "SE" }
+   ]);
+   console.log("Inserted");
+}
 
 
 // read document
+async function readStudents() {
+   const all = await Student.find();
+   console.log(all);
+}
 
 
 // update document
+async function updateStudent() {
+   await Student.updateOne({ name: "Ali" }, { $set: { age: 22 } });
+   console.log("Updated Ali");
+}
 
 
 // delete document
+async function deleteStudent() {
+   await Student.deleteOne({ name: "Sara" });
+   console.log("Deleted Sara");
+}
+
+async function runLab() {
+   if (connectionString.includes("<db_password>")) {
+      console.log(
+         "Replace <db_password> in the MongoDB connection string or set MONGODB_URI before running the lab."
+      );
+      return;
+   }
+
+   try {
+      await mongoose.connect(connectionString);
+      console.log("Connected to MongoDB");
+
+      await Student.deleteMany({ name: { $in: ["Ali", "Sara"] } });
+      await createStudents();
+      await readStudents();
+      await updateStudent();
+      await deleteStudent();
+      await readStudents();
+   } catch (error) {
+      console.error(error);
+   } finally {
+      await mongoose.connection.close();
+   }
+}
+
+runLab();
